@@ -1,45 +1,43 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity 0.8.19;
 
-import {MockV3Aggregator} from "../mocks/MockV3Aggregator.sol";
-import {Test, console} from "forge-std/Test.sol";
-import {StdCheats} from "forge-std/StdCheats.sol";
-import {OracleLib, AggregatorV3Interface} from "../../src/library/OracleLib.sol";
+import {ERC20Burnable, ERC20} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-contract OracleLibTest is StdCheats, Test {
-    using OracleLib for AggregatorV3Interface;
+contract MockFailedMintDSC is ERC20Burnable, Ownable {
+    error DecentralizedStableCoin__AmountMustBeMoreThanZero();
+    error DecentralizedStableCoin__BurnAmountExceedsBalance();
+    error DecentralizedStableCoin__NotZeroAddress();
 
-    MockV3Aggregator public aggregator;
-    uint8 public constant DECIMALS = 8;
-    int256 public constant INITAL_PRICE = 2000 ether;
+    /*
+    In future versions of OpenZeppelin contracts package, Ownable must be declared with an address of the contract owner
+    as a parameter.
+    For example:
+    constructor() ERC20("DecentralizedStableCoin", "DSC") Ownable(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266) {}
+    Related code changes can be viewed in this commit:
+    https://github.com/OpenZeppelin/openzeppelin-contracts/commit/13d5e0466a9855e9305119ed383e54fc913fdc60
+    */
+    constructor() ERC20("DecentralizedStableCoin", "DSC") {}
 
-    function setUp() public {
-        aggregator = new MockV3Aggregator(DECIMALS, INITAL_PRICE);
+    function burn(uint256 _amount) public override onlyOwner {
+        uint256 balance = balanceOf(msg.sender);
+        if (_amount <= 0) {
+            revert DecentralizedStableCoin__AmountMustBeMoreThanZero();
+        }
+        if (balance < _amount) {
+            revert DecentralizedStableCoin__BurnAmountExceedsBalance();
+        }
+        super.burn(_amount);
     }
 
-    function testGetTimeout() public {
-        uint256 expectedTimeout = 3 hours;
-        assertEq(OracleLib.getTimeout(AggregatorV3Interface(address(aggregator))), expectedTimeout);
-    }
-
-    // Foundry Bug - I have to make staleCheckLatestRoundData public
-    function testPriceRevertsOnStaleCheck() public {
-        vm.warp(block.timestamp + 4 hours + 1 seconds);
-        vm.roll(block.number + 1);
-
-        vm.expectRevert(OracleLib.OracleLib__StalePrice.selector);
-        AggregatorV3Interface(address(aggregator)).staleCheckLatestRoundData();
-    }
-
-    function testPriceRevertsOnBadAnsweredInRound() public {
-        uint80 _roundId = 0;
-        int256 _answer = 0;
-        uint256 _timestamp = 0;
-        uint256 _startedAt = 0;
-        aggregator.updateRoundData(_roundId, _answer, _timestamp, _startedAt);
-
-        vm.expectRevert(OracleLib.OracleLib__StalePrice.selector);
-        AggregatorV3Interface(address(aggregator)).staleCheckLatestRoundData();
+    function mint(address _to, uint256 _amount) external onlyOwner returns (bool) {
+        if (_to == address(0)) {
+            revert DecentralizedStableCoin__NotZeroAddress();
+        }
+        if (_amount <= 0) {
+            revert DecentralizedStableCoin__AmountMustBeMoreThanZero();
+        }
+        _mint(_to, _amount);
+        return false;
     }
 }
