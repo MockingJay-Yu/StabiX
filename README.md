@@ -9,7 +9,7 @@ bash run.sh ${network}
 ```
 eg:
 ```
-bash run.sh ${sepolia}
+bash run.sh ${arbitrum}
 ```
 
 - sepolia
