@@ -25,6 +25,8 @@ contract HelperConfig is Script {
     constructor() {
         if (block.chainid == 11_155_111) {
             activeNetworkConfig = getSepoliaEthConfig();
+        } else if (block.chainid == 42161) {
+            activeNetworkConfig = getArbitrumConfig();
         } else {
             activeNetworkConfig = getOrCreateAnvilEthConfig();
         }
@@ -36,7 +38,17 @@ contract HelperConfig is Script {
             wbtcUsdPriceFeed: 0x1b44F3514812d835EB1BDB0acB33d3fA3351Ee43,
             weth: 0xdd13E55209Fd76AfE204dBda4007C227904f0a81,
             wbtc: 0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063,
-            deployerKey: vm.envUint("PRIVATE_KEY")
+            deployerKey: vm.envUint("SEPOLIA_PRIVATE_KEY")
+        });
+    }
+
+    function getArbitrumConfig() public view returns (NetworkConfig memory arbitrumConfig) {
+        arbitrumConfig = NetworkConfig({
+            wethUsdPriceFeed: 0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612, // ETH / USD
+            wbtcUsdPriceFeed: 0x6ce185860a4963106506C203335A2910413708e9,
+            weth: 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1,
+            wbtc: 0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f,
+            deployerKey: vm.envUint("ARBITRUM_PRIVATE_KEY")
         });
     }
 

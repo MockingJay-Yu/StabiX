@@ -2,17 +2,15 @@ source .env
 
 if [ "$1" == "sepolia" ]; then
     RPC_URL=$SEPOLIA_RPC_URL
+    PRIVATE_KEY=$SEPOLIA_PRIVATE_KEY
+    SCAN_API_KEY=$ETHERSCAN_API_KEY
 elif [ "$1" == "arbitrum" ]; then
     RPC_URL=$ARBITRUM_RPC_URL
-fi
-
-if [ "$2" == "sepolia" ]; then
-    PRIVATE_KEY=$SEPOLIA_PRIVATE_KEY
-elif [ "$2" == "arbitrum" ]; then
-    RPC_URL=$POLYGON_PRIVATE_KEY
+    PRIVATE_KEY=$ARBITRUM_PRIVATE_KEY
+    SCAN_API_KEY=$ARBISCAN_API_KEY
 fi
 
 forge script script/DeployDSC.s.sol --rpc-url $RPC_URL \
                                     --private-key $PRIVATE_KEY \
                                     --broadcast \
-                                    --verify --etherscan-api-key $ETHERSCAN_API_KEY
+                                    --verify --etherscan-api-key $SCAN_API_KEY
